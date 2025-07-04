@@ -9,5 +9,4 @@ public enum ForestryEvents {
     PHEASANT,
     RITUAL_CIRCLES,
     ENTLING,
-    STRUGGLING_SAPLING
 }
