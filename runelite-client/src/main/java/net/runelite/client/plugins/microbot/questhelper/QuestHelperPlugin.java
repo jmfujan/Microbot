@@ -29,7 +29,6 @@ import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.questhelper.bank.banktab.BankTabItems;
 import net.runelite.client.plugins.microbot.questhelper.bank.banktab.PotionStorage;
 import net.runelite.client.plugins.microbot.questhelper.managers.*;
@@ -72,7 +71,6 @@ import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import net.runelite.client.util.Text;
 import org.apache.commons.lang3.ArrayUtils;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.*;
@@ -200,14 +198,6 @@ public class QuestHelperPlugin extends Plugin
 
 		questOverlayManager.startUp();
 
-		if (developerMode)
-		{
-			if (config.devShowOverlayOnLaunch())
-			{
-				questOverlayManager.addDebugOverlay();
-			}
-		}
-
 		final BufferedImage icon = Icon.QUEST_ICON.getImage();
 
 		panel = new QuestHelperPanel(this, questManager, configManager);
@@ -239,11 +229,6 @@ public class QuestHelperPlugin extends Plugin
 		eventBus.unregister(playerStateManager);
 		eventBus.unregister(runeliteObjectManager);
 		eventBus.unregister(worldMapAreaManager);
-		if (developerMode)
-		{
-			// We don't check if it was added, since removing an unadded overlay is a no-op
-			questOverlayManager.removeDebugOverlay();
-		}
 		questOverlayManager.shutDown();
 		playerStateManager.shutDown();
 
@@ -424,18 +409,6 @@ public class QuestHelperPlugin extends Plugin
 				questManager.getSelectedQuest().setSidebarOrder(loadSidebarOrder(questManager.getSelectedQuest()));
 			}
 		}
-
-		if (developerMode && "devShowOverlayOnLaunch".equals(event.getKey()))
-		{
-			if (config.devShowOverlayOnLaunch())
-			{
-				questOverlayManager.addDebugOverlay();
-			}
-			else
-			{
-				questOverlayManager.removeDebugOverlay();
-			}
-		}
 	}
 
 	@Subscribe
@@ -489,7 +462,7 @@ public class QuestHelperPlugin extends Plugin
 		return questBankManager.getBankTagService().getPluginBankTagItemsForSections(false);
 	}
 
-	public @Nullable QuestHelper getSelectedQuest()
+	public QuestHelper getSelectedQuest()
 	{
 		return questManager.getSelectedQuest();
 	}
@@ -580,7 +553,7 @@ public class QuestHelperPlugin extends Plugin
 			binder.bind(QuestHelper.class).toInstance(questHelper);
 			binder.install(questHelper);
 		};
-		Injector questInjector = Microbot.getInjector().createChildInjector(questModule);
+		Injector questInjector = RuneLite.getInjector().createChildInjector(questModule);
 		injector.injectMembers(questHelper);
 		questHelper.setInjector(questInjector);
 		questHelper.setQuest(quest);

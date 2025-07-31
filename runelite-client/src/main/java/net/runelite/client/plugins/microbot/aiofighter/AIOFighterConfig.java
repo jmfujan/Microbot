@@ -246,7 +246,7 @@ public interface AIOFighterConfig extends Config {
             section = lootSection
     )
     default String listOfItemsToLoot() {
-        return "brimstone key";
+        return "bones,ashes";
     }
 
     @ConfigItem(
@@ -322,7 +322,7 @@ public interface AIOFighterConfig extends Config {
     @ConfigItem(
             keyName = "Bury Bones",
             name = "Bury Bones",
-            description = "Picks up and Bury Bones. Casts Sinister Offering if possible.",
+            description = "Picks up and Bury Bones",
             position = 96,
             section = lootSection
     )
@@ -332,8 +332,8 @@ public interface AIOFighterConfig extends Config {
 
     @ConfigItem(
             keyName = "Scatter",
-            name = "Scatter Ashes",
-            description = "Picks up and Scatter ashes. Casts Demonic Offering if possible.",
+            name = "Scatter",
+            description = "Picks up and Scatter ashes",
             position = 97,
             section = lootSection
     )
@@ -397,31 +397,6 @@ public interface AIOFighterConfig extends Config {
             section = lootSection
     )
     default boolean eatFoodForSpace() { return false; }
-
-    @ConfigItem(
-            keyName = "waitForLoot",
-            name = "Wait for Loot",
-            description = "Wait for loot to appear before attacking next NPC",
-            position = 103,
-            section = lootSection,
-            hidden = true
-    )
-    default boolean toggleWaitForLoot() {
-        return false;
-    }
-
-    @Range(min = 1, max = 10)
-    @ConfigItem(
-            keyName = "lootWaitTimeout",
-            name = "Loot Wait Timeout (s)",
-            description = "Seconds to wait for loot before resuming combat (1-10)",
-            position = 104,
-            section = lootSection,
-            hidden = true
-    )
-    default int lootWaitTimeout() {
-        return 6;
-    }
 
     //set center tile manually
     @ConfigItem(

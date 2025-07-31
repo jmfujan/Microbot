@@ -177,8 +177,7 @@ public class ResupplyHandler implements BaseHandler {
         int desired = target - countMoonlightPotions();
         if (desired <= 0) return 0;
 
-        final int overheadSlots = 2; // 1 mortar + 1 extra slot for double pulls from crate
-        int requiredSlots = desired * 2 + overheadSlots;    // 2 per potion + 1 mortar + 1 space for double potion pulls from crate
+        int requiredSlots = desired * 2 + 1;                // 2 per potion + 1 mortar
         if (debugLogging) {Microbot.log("Required free inventory slots: " + requiredSlots);}
         int freeSlots     = Rs2Inventory.emptySlotCount();
         if (debugLogging) {Microbot.log("Current free inventory slots: " + freeSlots);}
@@ -197,7 +196,7 @@ public class ResupplyHandler implements BaseHandler {
             freeSlots = Rs2Inventory.emptySlotCount();
         }
         if (freeSlots < requiredSlots) {
-            desired = Math.max((freeSlots - overheadSlots) / 2, 0);
+            desired = Math.max((freeSlots - 1) / 2, 0);
         }
         return desired;
     }

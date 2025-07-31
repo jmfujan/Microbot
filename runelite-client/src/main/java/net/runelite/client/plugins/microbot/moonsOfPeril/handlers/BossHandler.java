@@ -113,9 +113,6 @@ public final class BossHandler {
     public void drinkIfNeeded() {
         int maxPrayer = Rs2Player.getRealSkillLevel(Skill.PRAYER);
         int minimumPrayerPoint = (maxPrayer * prayerPercentage) / 100;
-        if (!Rs2Player.hasMoonlightActive()) {
-            Rs2Player.drinkPrayerPotion();
-        }
         Rs2Player.drinkPrayerPotionAt(minimumPrayerPoint);
     }
 

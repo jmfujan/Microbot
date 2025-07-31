@@ -548,11 +548,9 @@ public class ItemRequirement extends AbstractRequirement
 	/**
 	 * Appends a tooltip indicating that the item can be obtained during the quest.
 	 */
-	public ItemRequirement canBeObtainedDuringQuest()
+	public void canBeObtainedDuringQuest()
 	{
 		appendToTooltip("Can be obtained during the quest.");
-
-		return this;
 	}
 
 	/**

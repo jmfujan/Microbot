@@ -38,8 +38,11 @@ import net.runelite.client.plugins.config.SearchablePlugin;
 import net.runelite.client.plugins.microbot.externalplugins.MicrobotPluginClient;
 import net.runelite.client.plugins.microbot.externalplugins.MicrobotPluginManager;
 import net.runelite.client.plugins.microbot.externalplugins.MicrobotPluginManifest;
-import net.runelite.client.plugins.microbot.util.misc.Rs2UiHelper;
-import net.runelite.client.ui.*;
+import net.runelite.client.ui.ClientUI;
+import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.DynamicGridLayout;
+import net.runelite.client.ui.FontManager;
+import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
@@ -282,7 +285,7 @@ public class MicrobotPluginHubPanel extends PluginPanel {
                 addrm.setBackground(new Color(0x28BE28));
                 addrm.addActionListener(l -> {
                     // Check version compatibility before installing
-                    if (!Rs2UiHelper.isClientVersionCompatible(manifest.getMinClientVersion())) {
+                    if (!microbotPluginManager.isClientVersionCompatible(manifest.getMinClientVersion())) {
                         String _currentMicrobotVersion = RuneLiteProperties.getMicrobotVersion();
                         String requiredVersion = manifest.getMinClientVersion();
 
@@ -340,7 +343,7 @@ public class MicrobotPluginHubPanel extends PluginPanel {
 
                     addrm.setText("Installing");
                     addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
-                    microbotPluginManager.installPlugin(manifest);
+                    microbotPluginManager.install(manifest);
                 });
             } else if (installed) {
                 // Check if update is available
@@ -360,8 +363,9 @@ public class MicrobotPluginHubPanel extends PluginPanel {
                     addrm.addActionListener(l -> {
                         addrm.setText("Updating");
                         addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
-                        microbotPluginManager.update();
-						reloadPluginList();
+                        microbotPluginManager.remove(manifest.getInternalName());
+                        microbotPluginManager.install(manifest); // This will update the plugin
+                        reloadPluginList();
                     });
                 } else {
                     addrm.setText("Remove");
@@ -369,7 +373,7 @@ public class MicrobotPluginHubPanel extends PluginPanel {
                     addrm.addActionListener(l -> {
                         addrm.setText("Removing");
                         addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
-                        microbotPluginManager.removePlugin(manifest);
+                        microbotPluginManager.remove(manifest.getInternalName());
                     });
                 }
             } else {
@@ -567,38 +571,43 @@ public class MicrobotPluginHubPanel extends PluginPanel {
         reloadPluginList();
     }
 
-    private void reloadPluginList() {
-        if (refreshing.isVisible()) {
-            return;
-        }
+	private void reloadPluginList()
+	{
+		if (refreshing.isVisible())
+		{
+			return;
+		}
 
-        refreshing.setVisible(true);
-        mainPanel.removeAll();
+		refreshing.setVisible(true);
+		mainPanel.removeAll();
 
-        executor.submit(() ->
-        {
-            Collection<MicrobotPluginManifest> manifestCollection = microbotPluginManager.getManifestMap().values();
+		executor.submit(() ->
+		{
+			Collection<MicrobotPluginManifest> manifestCollection = microbotPluginManager.getManifestMap().values();
 
-            Map<String, Integer> pluginCounts = Collections.emptyMap();
-            try {
-                pluginCounts = microbotPluginClient.getPluginCounts();
-            } catch (IOException e) {
-                log.warn("Unable to download plugin counts", e);
-                SwingUtilities.invokeLater(() ->
-                {
-                    refreshing.setVisible(false);
-                    mainPanel.add(new JLabel("Downloading the plugin manifest failed"));
+			Map<String, Integer> pluginCounts = Collections.emptyMap();
+			try
+			{
+				pluginCounts = microbotPluginClient.getPluginCounts();
+			}
+			catch (IOException e)
+			{
+				log.warn("Unable to download plugin counts", e);
+				SwingUtilities.invokeLater(() ->
+				{
+					refreshing.setVisible(false);
+					mainPanel.add(new JLabel("Downloading the plugin manifest failed"));
 
-                    JButton retry = new JButton("Retry");
-                    retry.addActionListener(l -> reloadPluginList());
-                    mainPanel.add(retry);
-                    mainPanel.revalidate();
-                });
-            }
+					JButton retry = new JButton("Retry");
+					retry.addActionListener(l -> reloadPluginList());
+					mainPanel.add(retry);
+					mainPanel.revalidate();
+				});
+			}
 
-            reloadPluginList(manifestCollection, pluginCounts);
-        });
-    }
+			reloadPluginList(manifestCollection, pluginCounts);
+		});
+	}
 
     private void reloadPluginList(Collection<MicrobotPluginManifest> manifest, Map<String, Integer> pluginCounts) {
 
@@ -616,7 +625,7 @@ public class MicrobotPluginHubPanel extends PluginPanel {
                 .filter(isExternalPluginPredicate)
                 .collect(Collectors.toList());
 
-        List<MicrobotPluginManifest> installed = new ArrayList<>(microbotPluginManager.getInstalledPlugins());
+        Set<String> installed = new HashSet<>(microbotPluginManager.getInstalledPlugins());
 
         // Pre-index manifests by internalName (lowercased) - using filtered list
         Map<String, MicrobotPluginManifest> manifestByName = enabledManifest.stream()
@@ -624,27 +633,27 @@ public class MicrobotPluginHubPanel extends PluginPanel {
                 .collect(Collectors.toMap(
                         m -> m.getInternalName().toLowerCase(Locale.ROOT),
                         Function.identity(),
-                        (a, b) -> a
+                        (a, b) -> a // keep first on duplicates
                 ));
 
-        // Index loaded plugins by simple name (lowercased) - all instances for that name
+        // Index loaded plugins by simple name (lowercased) → all instances for that name
         Map<String, Collection<Plugin>> pluginsByName = loadedPlugins.stream()
                 .collect(Collectors.groupingBy(
                         p -> p.getClass().getSimpleName().toLowerCase(Locale.ROOT),
                         LinkedHashMap::new,
-                        Collectors.toCollection(LinkedHashSet::new)
+                        Collectors.toCollection(LinkedHashSet::new) // stable, no dups
                 ));
 
         // Build PluginItem list by looping over manifests
         plugins = manifestByName.entrySet().stream()
                 .map(e -> {
-                    String key = e.getKey();
+                    String key = e.getKey();                       // lowercased internalName
                     MicrobotPluginManifest m = e.getValue();
-                    String simpleName = m.getInternalName();
+                    String simpleName = m.getInternalName();       // original case
 
                     Collection<Plugin> group = pluginsByName.getOrDefault(key, Collections.emptySet());
                     int count = pluginCounts.getOrDefault(simpleName, -1);
-                    boolean isInstalled = installed.stream().anyMatch(im -> im.getInternalName().equalsIgnoreCase(simpleName));
+                    boolean isInstalled = installed.contains(simpleName);
 
                     return new PluginItem(m, group, count, isInstalled);
                 })
@@ -711,10 +720,10 @@ public class MicrobotPluginHubPanel extends PluginPanel {
         }
     }
 
-    @Subscribe
-    private void onExternalPluginsChanged(ExternalPluginsChanged ev) {
-        reloadPluginList();
-    }
+	@Subscribe
+	private void onExternalPluginsChanged(ExternalPluginsChanged ev) {
+		reloadPluginList();
+	}
 
     // A utility class copied from the original PluginHubPanel
     private static class FixedWidthPanel extends JPanel {

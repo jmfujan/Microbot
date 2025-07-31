@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019, Trevor <https://github.com/Trevor159>
- * Copyright (c) 2025, pajlada <https://github.com/pajlada>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,9 +28,8 @@ import net.runelite.client.plugins.microbot.questhelper.QuestHelperPlugin;
 import net.runelite.client.plugins.microbot.questhelper.questhelpers.QuestHelper;
 import net.runelite.client.plugins.microbot.questhelper.requirements.Requirement;
 import net.runelite.client.plugins.microbot.questhelper.requirements.item.ItemRequirement;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import lombok.Setter;
+import net.runelite.client.plugins.microbot.questhelper.requirements.util.InventorySlots;
+import net.runelite.api.Item;
 import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
@@ -40,55 +38,46 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.ui.overlay.OverlayUtil;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.function.Predicate;
+
 public class DigStep extends DetailedQuestStep
 {
-	private final ItemRequirement spade;
-
-	@Setter
-	private WhenToHighlight whenToHighlight = WhenToHighlight.InScene;
-
-	/// Private ctor requiring a spade requirement, to be used by public ctors & builders
-	private DigStep(QuestHelper questHelper, WorldPoint worldPoint, String text, ItemRequirement spade, Requirement... requirements)
-	{
-		super(questHelper, worldPoint, text, requirements);
-		this.spade = spade;
-		this.getRequirements().add(this.spade);
-	}
-
+	private final ItemRequirement SPADE = new ItemRequirement("Spade", ItemID.SPADE);
+	private Predicate<Item> expectedItemPredicate = i -> i.getId() == -1;
+	private boolean hasExpectedItem = false;
 	public DigStep(QuestHelper questHelper, WorldPoint worldPoint, String text, Requirement... requirements)
 	{
-		this(questHelper, worldPoint, text, new ItemRequirement("Spade", ItemID.SPADE), requirements);
+		super(questHelper, worldPoint, text, requirements);
+		this.getRequirements().add(SPADE);
 	}
 
-	/// Creates a DigStep with a custom spade requirement, allowing you to pass through custom tooltips / tips to the player
-	public static DigStep withCustomSpadeRequirement(QuestHelper questHelper, WorldPoint worldPoint, String text, ItemRequirement spade, Requirement... requirements)
+	public void setExpectedItem(int itemID)
 	{
-		return new DigStep(questHelper, worldPoint, text, spade, requirements);
+		setExpectedItem(i -> i.getId() == itemID);
+	}
+
+	public void setExpectedItem(Predicate<Item> predicate)
+	{
+		this.expectedItemPredicate = predicate == null ? i -> true : predicate;
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
 		super.onGameTick(event);
-
-		Player player = client.getLocalPlayer();
-		if (player == null)
+		hasExpectedItem = InventorySlots.INVENTORY_SLOTS.contains(client, expectedItemPredicate);
+		if (!hasExpectedItem)
 		{
-			return;
+			Player player = client.getLocalPlayer();
+			if (player == null) {
+				return;
+			}
+			WorldPoint targetLocation = worldPoint;
+			boolean shouldHighlightSpade = targetLocation.isInScene(client);
+			SPADE.setHighlightInInventory(shouldHighlightSpade);
 		}
-		WorldPoint targetLocation = worldPoint;
-		boolean shouldHighlightSpade = false;
-		switch (this.whenToHighlight)
-		{
-			case InScene:
-				shouldHighlightSpade = targetLocation.isInScene(client);
-				break;
-
-			case OnTile:
-				shouldHighlightSpade = targetLocation.distanceTo(player.getWorldLocation()) == 0;
-				break;
-		}
-		spade.setHighlightInInventory(shouldHighlightSpade);
 	}
 
 	@Override
@@ -114,13 +103,5 @@ public class DigStep extends DetailedQuestStep
 	private BufferedImage getSpadeImage()
 	{
 		return itemManager.getImage(ItemID.SPADE);
-	}
-
-	public enum WhenToHighlight
-	{
-		/// Highlight the spade whenever the target tile is in the same scene as the player
-		InScene,
-		/// Highlight the spade whenever the player is standing on the target tile
-		OnTile,
 	}
 }
