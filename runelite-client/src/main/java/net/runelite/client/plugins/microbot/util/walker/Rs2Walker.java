@@ -1677,22 +1677,22 @@ public class Rs2Walker {
             }
         }
         // Handle Cobwebs blocking path
-        if (tileObject.getId() == ObjectID.BIGWEB_SLASHABLE) {
-            sleepUntil(() -> !Rs2Player.isMoving() && !Rs2Player.isAnimating(1200));
-			final WorldPoint webLocation = tileObject.getWorldLocation();
-			final WorldPoint currentPlayerPoint = Microbot.getClient().getLocalPlayer().getWorldLocation();
-			boolean doesWebStillExist = Rs2GameObject.getAll(o -> Objects.equals(webLocation, o.getWorldLocation()) && o.getId() == ObjectID.BIGWEB_SLASHABLE).stream().findFirst().isPresent();
-			if (doesWebStillExist) {
-				sleepUntil(() -> Rs2GameObject.getAll(o -> Objects.equals(webLocation, o.getWorldLocation()) && o.getId() == ObjectID.BIGWEB_SLASHABLE).stream().findFirst().isEmpty(),
-				() -> {
-					Rs2GameObject.interact(tileObject, "slash");
-					Rs2Player.waitForAnimation();
-				}, 8000, 1200);
-			}
-			Rs2Walker.walkFastCanvas(transport.getDestination());
-            return sleepUntil(() -> !Objects.equals(currentPlayerPoint, Microbot.getClient().getLocalPlayer().getWorldLocation()));
-        }
-        
+//        if (tileObject.getId() == ObjectID.BIGWEB_SLASHABLE) {
+//            sleepUntil(() -> !Rs2Player.isMoving() && !Rs2Player.isAnimating(1200));
+//			final WorldPoint webLocation = tileObject.getWorldLocation();
+//			final WorldPoint currentPlayerPoint = Microbot.getClient().getLocalPlayer().getWorldLocation();
+////			boolean doesWebStillExist = Rs2GameObject.getAll(o -> Objects.equals(webLocation, o.getWorldLocation()) && o.getId() == ObjectID.BIGWEB_SLASHABLE).stream().findFirst().isPresent();
+//			if (doesWebStillExist) {
+//				sleepUntil(() -> Rs2GameObject.getAll(o -> Objects.equals(webLocation, o.getWorldLocation()) && o.getId() == ObjectID.BIGWEB_SLASHABLE).stream().findFirst().isEmpty(),
+////				() -> {
+////					Rs2GameObject.interact(tileObject, "slash");
+////					Rs2Player.waitForAnimation();
+////				}, 5000, 900);
+////			}
+//            Rs2Walker.walkFastCanvas(transport.getDestination());
+//            return sleepUntil(() -> !Objects.equals(currentPlayerPoint, Microbot.getClient().getLocalPlayer().getWorldLocation()));
+//        }
+
         // Handle Brimhaven Dungeon Entrance
         if (tileObject.getId() == 20877) {
             if (Rs2Player.isMoving()) {

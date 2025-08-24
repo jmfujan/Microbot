@@ -38,6 +38,13 @@ public interface GemCrabKillerConfig extends Config {
     default boolean useOffensivePotions() {
         return false;
     }
+    @ConfigItem(
+            keyName = "lootAmmo",
+            name = "Pick up ammo on the ground",
+            description = "if there's ammo on the ground and this is turned on you pick it up",
+            position = 7
+    )
+    default boolean lootAmmo() {return false;}
 
     @ConfigItem(
             keyName = "lootCrab",
