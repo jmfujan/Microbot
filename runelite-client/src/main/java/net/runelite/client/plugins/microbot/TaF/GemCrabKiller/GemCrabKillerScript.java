@@ -11,6 +11,8 @@ import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
+import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
+import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
@@ -53,6 +55,7 @@ public class GemCrabKillerScript extends Script {
                         handlePotions(config);
                         handleSafety(config);
                         handleFighting(config);
+                        lootAmmo(config);
                         break;
                     case BANKING:
                         handleBanking(config);
@@ -202,6 +205,32 @@ public class GemCrabKillerScript extends Script {
             waitingTimeStart = null;
         }
     }
+
+    private void lootAmmo(GemCrabKillerConfig config) {
+        if (Rs2GroundItem.exists("arrow",15)) {
+            LootingParameters arrowParams = new LootingParameters(
+                   15, 1, 4, 5,false, false,"arrow");
+            if (Rs2GroundItem.lootItemsBasedOnNames(arrowParams)) {
+                Microbot.pauseAllScripts.compareAndSet(true,false);
+            }
+        }
+        if (Rs2GroundItem.exists("bolt",15)) {
+            LootingParameters boltParams = new LootingParameters(
+                    15, 3, 5, 5,false, false,"bolt");
+            if (Rs2GroundItem.lootItemsBasedOnNames(boltParams)) {
+                Microbot.pauseAllScripts.compareAndSet(true,false);
+            }
+        }
+        if (Rs2GroundItem.exists("knife",15)) {
+            LootingParameters knifeParams = new LootingParameters(
+                    15, 1, 4, 5,false, false,"knife");
+            if (Rs2GroundItem.lootItemsBasedOnNames(knifeParams)) {
+                Microbot.pauseAllScripts.compareAndSet(true,false);
+            }
+        }
+
+    }
+
 
     private void handleWalking() {
         if (Rs2Bank.isOpen()) {
