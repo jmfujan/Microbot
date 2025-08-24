@@ -7,12 +7,10 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.microbot.util.misc.TimeUtils;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 import javax.inject.Inject;
 import java.awt.*;
-import java.time.Instant;
 
 @PluginDescriptor(
         name = PluginDescriptor.Default + "Grubby Chest",
@@ -22,8 +20,6 @@ import java.time.Instant;
 )
 @Slf4j
 public class grubbyChestPlugin extends Plugin {
-    public Instant scriptStartTime;
-    public int chestsOpened = 0;
     @Inject
     private net.runelite.client.plugins.microbot.grubbyChest.grubbyChestConfig config;
     @Provides
@@ -39,10 +35,6 @@ public class grubbyChestPlugin extends Plugin {
     @Inject
     grubbyChestScript grubbyChestScript;
 
-    @Provides
-    protected String getTimeRunning() {
-        return scriptStartTime != null ? TimeUtils.getFormattedDurationBetween(scriptStartTime, Instant.now()) : "";
-    }
 
     @Override
     protected void startUp() throws AWTException {
@@ -51,15 +43,12 @@ public class grubbyChestPlugin extends Plugin {
             grubbyChestOverlay.myButton.hookMouseListener();
         }
         grubbyChestScript.run((grubbyChestConfig) config);
-        scriptStartTime = Instant.now();
     }
 
     protected void shutDown() {
         grubbyChestScript.shutdown();
         overlayManager.remove(grubbyChestOverlay);
-        chestsOpened = 0;
         grubbyChestOverlay.myButton.unhookMouseListener();
-        scriptStartTime = Instant.now();
     }
     int ticks = 10;
     @Subscribe

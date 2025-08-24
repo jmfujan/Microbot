@@ -9,5 +9,4 @@ public enum grubbyChestStates {
     BANKING,
     RUNTOGRUBBYCHEST,
     LOOTING,
-    //INITIALIZING
 }
